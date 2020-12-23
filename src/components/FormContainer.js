@@ -1,5 +1,7 @@
-import React, {useState} from "react";
+import React from "react";
 import styled from "styled-components";
+import PropTypes from "prop-types";
+// import numeral from "numeral";
 
 const Container = styled.div`
   display: flex;
@@ -103,96 +105,211 @@ const Error = styled.h4`
   margin-top: 0.5rem;
 `
 
-const FormContainer = () => {
+// const FormContainer = () => {
 
-  const [purchasePrice, setPurchasePrice] = useState("");
-  const [downPayment, setDownPayment] = useState("");
-  const [loanTerm, setLoanTerm] = useState("");
-  const [loanApr, setLoanApr] = useState("");
-  const [monthlyPayments, setMonthlyPayments] = useState(0.0);
+export default class Fields extends React.Component {
+  constructor(props) {
+    super(props);
+    // numeral.localeData().delimiters.thousands = " ";
 
-  const submitCalculation = async (e) => {
-    e.preventDefault();
+    this.state = {
+      inFocus: false,
+      purchasePrice: '',
+      downPayment: '',
+      loanTerm: '',
+      loanApr: '',
 
+      monthlyPayments: ''
+    };
+    // this.handleChange = this.handleChange.bind(this)
+  }
+
+  changeFocus ()  {
+    this.setState(prevState => ({
+      inFocus: !prevState.inFocus
+    }));
+  }
+
+  // onChange(event) {
+  //   this.props.onChange(event.target.value);
+  // }
+  //
+  // toggleEditing() {
+  //   this.setState({isEditing: !this.state.isEditing})
+  // }
+
+  toCurrency(number) {
+    const formatter = new Intl.NumberFormat("sv-SE", {
+      style: "decimal",
+      currency: "SEK"
+    });
+
+    return formatter.format(number);
+  }
+
+  // handleChange(event) {
+  //     this.setState({value: event.target.value})
+  // }
+
+  submitCalculation(e) {
+    if (e) {
+      e.preventDefault();
+    }
     // validate fields
-    const validatedPrice = await validateField(purchasePrice, setPurchasePrice);
-    const validatedPayment = await validateField(downPayment, setDownPayment);
-    const validatedLoanTerm  =  await validateField(loanTerm, setLoanTerm);
-    const validatedApr  =  await validateField(loanApr, setLoanApr);
+    const validatedPrice = +this.state.purchasePrice;
+    const validatedPayment = +this.state.downPayment;
+    const validatedLoanTerm =+this.state.loanTerm;
+    const validatedApr = +this.state.loanApr;
     // calculate
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
-      console.log('validated')
-      calculateValues();
+        console.log('validated')
+        this.calculateValues();
+    } else {
+      this.setState({monthlyPayments: ''});
+
+      console.log('not full')
     }
   }
 
-  const calculateValues = () => {
-    let principal = purchasePrice - downPayment;
-    let monthlyInterest = loanApr / 100 / 12;
-    let numberOfPayments = loanTerm * 12;
+  calculateValues() {
+    let principal = this.state.purchasePrice - this.state.downPayment;
+    let monthlyInterest = this.state.loanApr / 100 / 12;
+    let numberOfPayments = this.state.loanTerm * 12;
     let monthlyPrice = (principal * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
-      [(1 + monthlyInterest) ** numberOfPayments - 1];
-    setMonthlyPayments(displayLocale(monthlyPrice));
+        [(1 + monthlyInterest) ** numberOfPayments - 1];
+    this.setState({monthlyPayments: this.displayLocale(monthlyPrice)});
+    console.log('calculate')
   }
 
-  const displayLocale = (num) => {
+  displayLocale(num) {
     let parts = Math.ceil(num).toString().split(".");
     return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (parts[1] ? '.' + parts[1] : '');
   }
 
-  const validateField = (field, setValue) => {
-    // console.log("gigig")
-    let int = parseFloat(field);
-    if (field === "" || field === 0) {
-      setValue({ ...field.values, error: "Обязательное поле"});
-      return false
-    } else if (isNaN(int)) {
-      setValue({ ...field.values, error: "Введите число"});
-      return false;
-    } else {
-      setValue(int);
-      // console.log('gigi')
-      return true;
-    }
+
+  updateField(event) {
+
+    const target = event.target;
+    const value =  target.value;
+    const name = target.name;
+
+    this.setState(prevState => ({
+      [name]: value,
+    }), () => {
+      this.submitCalculation()
+    })
+
   }
 
-  return (
-    <Container>
-      <h1>Калькулятор ипотеки</h1>
-      <form>
-        <InputSection>
-          <label>Стоимость недвижимости</label>
-          <Error>{purchasePrice.error}</Error>
-          <input
-            onChange={(e) => setPurchasePrice(e.target.value)}
-            type="text"/>
-        </InputSection>
-        <InputSection>
-          <label>Первоначальный взнос</label>
-          <Error>{downPayment.error}</Error>
-          <input
-            onChange={(e) => setDownPayment(e.target.value)}
-            type="text"/>
-        </InputSection>
-        <InputSection>
-          <label>Срок кредита</label>
-          <Error>{loanTerm.error}</Error>
-          <input
-            onChange={(e) => setLoanTerm(e.target.value)}
-            type="text"/>
-        </InputSection>
-        <InputSection>
-          <label>Процентная ставка</label>
-          <Error>{loanApr.error}</Error>
-          <input
-            onChange={(e) => setLoanApr(e.target.value)}
-            type="text"/>
-        </InputSection>
-        <SubmitBtn onClick={(e) => submitCalculation(e)}>Рассчитать</SubmitBtn>
-      </form>
-      <h3>Ежемесячный платеж: {monthlyPayments} руб.</h3>
-    </Container>
-  )
+
+  render() {
+    return (<Container>
+        <h1>Калькуляптор ипотеки</h1>
+        <form >
+          <InputSection>
+            <label>Стоимость недвижимости</label>
+            {/*<Error>{purchasePrice.error}</Error>*/}
+            <input
+              // value={in.state}
+                className={"sos"}
+              name="purchasePrice"
+              value={this.state.purchasePrice}
+              onChange={this.updateField.bind(this)}
+              type="text"/>
+          </InputSection>
+          <InputSection>
+            <label>Первоначальный взнос</label>
+            {/*<Error>{downPayment.error}</Error>*/}
+            <input
+              // onChange={(e) => setDownPayment(e.target.value)}
+                className={"sos"}
+              name="downPayment"
+              value={this.state.downPayment}
+              onChange={this.updateField.bind(this)}
+              type="text"/>
+          </InputSection>
+          <InputSection>
+            <label>Срок кредита</label>
+            {/*<Error>{loanTerm.error}</Error>*/}
+            <input
+              // onChange={(e) => setLoanTerm(e.target.value)}
+                className={"sos"}
+                name="loanTerm"
+              value={this.state.loanTerm}
+              onChange={this.updateField.bind(this)}
+              type="text"/>
+          </InputSection>
+          <InputSection>
+            <label>Процентная ставка</label>
+            {/*<Error>{loanApr.error}</Error>*/}
+            <input
+              // onChange={(e) => setLoanApr(e.target.value)}
+                className={"sos"}
+                name="loanApr"
+              value={this.state.loanApr}
+              onChange={this.updateField.bind(this)}
+              type="text"/>
+          </InputSection>
+          <SubmitBtn id="submit" onClick={(e) => this.submitCalculation(e)}>Рассчитать</SubmitBtn>
+        </form>
+        <h3>Ежемесячный платеж: {this.state.monthlyPayments} руб.</h3>
+      </Container>
+    )
+  }
 }
 
-export default FormContainer;
+// const [purchasePrice, setPurchasePrice] = useState("");
+// const [downPayment, setDownPayment] = useState("");
+// const [loanTerm, setLoanTerm] = useState("");
+// const [loanApr, setLoanApr] = useState("");
+// const [monthlyPayments, setMonthlyPayments] = useState(0.0);
+// //
+// const submitCalculation = async (e) => {
+//     e.preventDefault();
+//
+//     // validate fields
+//     const validatedPrice = await validateField(purchasePrice, setPurchasePrice);
+//     const validatedPayment = await validateField(downPayment, setDownPayment);
+//     const validatedLoanTerm = await validateField(loanTerm, setLoanTerm);
+//     const validatedApr = await validateField(loanApr, setLoanApr);
+//     // calculate
+//     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
+//         console.log('validated')
+//         calculateValues();
+//     }
+// }
+//
+// const calculateValues = () => {
+//     let principal = purchasePrice - downPayment;
+//     let monthlyInterest = loanApr / 100 / 12;
+//     let numberOfPayments = loanTerm * 12;
+//     let monthlyPrice = (principal * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
+//         [(1 + monthlyInterest) ** numberOfPayments - 1];
+//     setMonthlyPayments(displayLocale(monthlyPrice));
+// }
+//
+// const displayLocale = (num) => {
+//     let parts = Math.ceil(num).toString().split(".");
+//     return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (parts[1] ? '.' + parts[1] : '');
+// }
+//
+// const validateField = (field, setValue) => {
+//     // console.log("gigig")
+//     let int = parseFloat(field);
+//     if (field === "" || field === 0) {
+//         setValue({...field.values, error: "Обязательное поле"});
+//         return false
+//     } else if (isNaN(int)) {
+//         setValue({...field.values, error: "Введите число"});
+//         return false;
+//     } else {
+//         setValue(int);
+//         // console.log('gigi')
+//         return true;
+//     }
+// }
+
+// return StateForm
+// }
+
+// export default FormContainer;
