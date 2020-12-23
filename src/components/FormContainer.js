@@ -107,31 +107,40 @@ flex-wrap: wrap;
   border-radius: 1rem;
 `
 
-// const Error = styled.h4`
-//   color: red;
-//   font-size: 13px;
-//   margin-top: 0.5rem;
-// `
-
-// const FormContainer = () => {
-
 export default class Fields extends React.Component {
   constructor(props) {
     super(props);
     // numeral.localeData().delimiters.thousands = " ";
+    if (localStorage.getItem("stateCalc")) {
+      const localState = JSON.parse(localStorage.getItem("stateCalc"));
 
-    this.state = {
-      inFocus: false,
-      purchasePrice: '',
-      downPayment: '',
-      loanTerm: '',
-      loanApr: '',
+      this.state = {
+        inFocus: false,
+        purchasePrice: localState["purchasePrice"],
+        downPayment: localState["downPayment"],
+        loanTerm: localState["loanTerm"],
+        loanApr: localState["loanApr"],
 
-      monthlyPayments: '',
-      loanBody: '',
-      requiredIncome: '',
-      overpayment: ''
-    };
+        monthlyPayments: localState["monthlyPayments"],
+        loanBody: localState["loanBody"],
+        requiredIncome: localState["requiredIncome"],
+        overpayment: localState["overpayment"]
+      };
+    } else {
+      this.state = {
+        inFocus: false,
+        purchasePrice: '',
+        downPayment: '',
+        loanTerm: '',
+        loanApr: '',
+
+        monthlyPayments: '',
+        loanBody: '',
+        requiredIncome: '',
+        overpayment: ''
+      };
+    }
+
 
   }
 
@@ -140,7 +149,6 @@ export default class Fields extends React.Component {
       inFocus: !prevState.inFocus
     }));
   }
-
 
   toCurrency(number) {
     const formatter = new Intl.NumberFormat("sv-SE", {
@@ -153,11 +161,27 @@ export default class Fields extends React.Component {
 
   saveState(e) {
     e.preventDefault();
+    const stateCalc = JSON.stringify(this.state)
+    localStorage.setItem("stateCalc", stateCalc);
+  }
 
+  cleanRes() {
+    this.setState({monthlyPayments: ''});
+    this.setState({loanBody: ''});
+    this.setState({requiredIncome: ''});
+    this.setState({overpayment: ''});
   }
 
   deleteState(e) {
-
+    e.preventDefault();
+    if (localStorage.getItem("stateCalc")) {
+      localStorage.clear()
+    }
+    this.setState({purchasePrice: ''});
+    this.setState({downPayment: ''});
+    this.setState({loanTerm: ''});
+    this.setState({loanApr: ''});
+    this.cleanRes()
   }
 
   validateFields() {
@@ -170,10 +194,7 @@ export default class Fields extends React.Component {
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
         this.calculateValues();
     } else {
-      this.setState({monthlyPayments: ''});
-      this.setState({loanBody: ''});
-      this.setState({requiredIncome: ''});
-      this.setState({overpayment: ''});
+     this.cleanRes()
     }
   }
 
@@ -197,7 +218,6 @@ export default class Fields extends React.Component {
     return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (parts[1] ? '.' + parts[1] : '');
   }
 
-
   updateField(event) {
     const target = event.target;
     const value =  target.value;
@@ -210,14 +230,12 @@ export default class Fields extends React.Component {
     })
   }
 
-
   render() {
     return (<Container>
         <h1>Калькуляптор ипотеки</h1>
         <form >
           <InputSection>
             <label>Стоимость недвижимости</label>
-            {/*<Error>{purchasePrice.error}</Error>*/}
             <input
               className={"sos"}
               name="purchasePrice"
@@ -227,9 +245,7 @@ export default class Fields extends React.Component {
           </InputSection>
           <InputSection>
             <label>Первоначальный взнос</label>
-            {/*<Error>{downPayment.error}</Error>*/}
             <input
-              // onChange={(e) => setDownPayment(e.target.value)}
               className={"sos"}
               name="downPayment"
               value={this.state.downPayment}
@@ -238,9 +254,7 @@ export default class Fields extends React.Component {
           </InputSection>
           <InputSection>
             <label>Срок кредита (лет)</label>
-            {/*<Error>{loanTerm.error}</Error>*/}
             <input
-              // onChange={(e) => setLoanTerm(e.target.value)}
               className={"sos"}
               name="loanTerm"
               value={this.state.loanTerm}
@@ -249,9 +263,7 @@ export default class Fields extends React.Component {
           </InputSection>
           <InputSection>
             <label>Процентная ставка</label>
-            {/*<Error>{loanApr.error}</Error>*/}
             <input
-              // onChange={(e) => setLoanApr(e.target.value)}
               className={"sos"}
               name="loanApr"
               value={this.state.loanApr}
@@ -267,7 +279,6 @@ export default class Fields extends React.Component {
             <h3>Переплата: {this.state.overpayment} руб.</h3>
             <h3>Тело кредита: {this.state.loanBody} руб.</h3>
           </ResultContainer>
-
       </Container>
     )
   }
