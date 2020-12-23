@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
 // import numeral from "numeral";
 
 const Container = styled.div`
@@ -25,13 +24,7 @@ const Container = styled.div`
     font-weight: 400;
     font-size: 20px;
     line-height: 20px;
-    margin-top: 3rem;
-    background: #fff;
-    padding: 3rem;
-    color: #2a6279;
-    box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
-    0 6px 6px -1px rgba(8, 11, 14, 0.1);
-    border-radius: 1rem;
+    padding: 1rem;
   }
 
   form {
@@ -88,7 +81,7 @@ const SubmitBtn = styled.button`
   line-height: 36px;
   border-radius: 2px;
   cursor: pointer;
-  margin-top: 1rem;
+  margin: 1rem;
   box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
   0 6px 6px -1px rgba(8, 11, 14, 0.1);
   transition: all 0.3s ease-in-out;
@@ -99,11 +92,26 @@ const SubmitBtn = styled.button`
   }
 `
 
-const Error = styled.h4`
-  color: red;
-  font-size: 13px;
-  margin-top: 0.5rem;
+const ResultContainer = styled.div`
+display: flex;
+flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: row;
+  max-width: 600px;
+  margin: auto;
+  color: #2a6279;
+  background-color: #fff;
+  box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
+  0 6px 6px -1px rgba(8, 11, 14, 0.1);
+  border-radius: 1rem;
 `
+
+// const Error = styled.h4`
+//   color: red;
+//   font-size: 13px;
+//   margin-top: 0.5rem;
+// `
 
 // const FormContainer = () => {
 
@@ -119,9 +127,12 @@ export default class Fields extends React.Component {
       loanTerm: '',
       loanApr: '',
 
-      monthlyPayments: ''
+      monthlyPayments: '',
+      loanBody: '',
+      requiredIncome: '',
+      overpayment: ''
     };
-    // this.handleChange = this.handleChange.bind(this)
+
   }
 
   changeFocus ()  {
@@ -130,13 +141,6 @@ export default class Fields extends React.Component {
     }));
   }
 
-  // onChange(event) {
-  //   this.props.onChange(event.target.value);
-  // }
-  //
-  // toggleEditing() {
-  //   this.setState({isEditing: !this.state.isEditing})
-  // }
 
   toCurrency(number) {
     const formatter = new Intl.NumberFormat("sv-SE", {
@@ -147,14 +151,16 @@ export default class Fields extends React.Component {
     return formatter.format(number);
   }
 
-  // handleChange(event) {
-  //     this.setState({value: event.target.value})
-  // }
+  saveState(e) {
+    e.preventDefault();
 
-  submitCalculation(e) {
-    if (e) {
-      e.preventDefault();
-    }
+  }
+
+  deleteState(e) {
+
+  }
+
+  validateFields() {
     // validate fields
     const validatedPrice = +this.state.purchasePrice;
     const validatedPayment = +this.state.downPayment;
@@ -162,33 +168,37 @@ export default class Fields extends React.Component {
     const validatedApr = +this.state.loanApr;
     // calculate
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
-        console.log('validated')
         this.calculateValues();
     } else {
       this.setState({monthlyPayments: ''});
-
-      console.log('not full')
+      this.setState({loanBody: ''});
+      this.setState({requiredIncome: ''});
+      this.setState({overpayment: ''});
     }
   }
 
   calculateValues() {
-    let principal = this.state.purchasePrice - this.state.downPayment;
+    let loanBody = this.state.purchasePrice - this.state.downPayment;
     let monthlyInterest = this.state.loanApr / 100 / 12;
     let numberOfPayments = this.state.loanTerm * 12;
-    let monthlyPrice = (principal * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
+    let monthlyPrice = (loanBody * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
         [(1 + monthlyInterest) ** numberOfPayments - 1];
+    let requiredIncome = monthlyPrice / 3 * 5;
+    let overpayment = monthlyPrice * (this.state.loanTerm * 12) - this.state.purchasePrice + +this.state.downPayment;
     this.setState({monthlyPayments: this.displayLocale(monthlyPrice)});
-    console.log('calculate')
+    this.setState({loanBody: this.displayLocale(loanBody)});
+    this.setState({requiredIncome: this.displayLocale(requiredIncome)});
+    this.setState({overpayment: this.displayLocale(overpayment)});
+
   }
 
   displayLocale(num) {
-    let parts = Math.ceil(num).toString().split(".");
+    let parts = Math.floor(num).toString().split(".");
     return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (parts[1] ? '.' + parts[1] : '');
   }
 
 
   updateField(event) {
-
     const target = event.target;
     const value =  target.value;
     const name = target.name;
@@ -196,9 +206,8 @@ export default class Fields extends React.Component {
     this.setState(prevState => ({
       [name]: value,
     }), () => {
-      this.submitCalculation()
+      this.validateFields()
     })
-
   }
 
 
@@ -210,8 +219,7 @@ export default class Fields extends React.Component {
             <label>Стоимость недвижимости</label>
             {/*<Error>{purchasePrice.error}</Error>*/}
             <input
-              // value={in.state}
-                className={"sos"}
+              className={"sos"}
               name="purchasePrice"
               value={this.state.purchasePrice}
               onChange={this.updateField.bind(this)}
@@ -222,19 +230,19 @@ export default class Fields extends React.Component {
             {/*<Error>{downPayment.error}</Error>*/}
             <input
               // onChange={(e) => setDownPayment(e.target.value)}
-                className={"sos"}
+              className={"sos"}
               name="downPayment"
               value={this.state.downPayment}
               onChange={this.updateField.bind(this)}
               type="text"/>
           </InputSection>
           <InputSection>
-            <label>Срок кредита</label>
+            <label>Срок кредита (лет)</label>
             {/*<Error>{loanTerm.error}</Error>*/}
             <input
               // onChange={(e) => setLoanTerm(e.target.value)}
-                className={"sos"}
-                name="loanTerm"
+              className={"sos"}
+              name="loanTerm"
               value={this.state.loanTerm}
               onChange={this.updateField.bind(this)}
               type="text"/>
@@ -244,72 +252,24 @@ export default class Fields extends React.Component {
             {/*<Error>{loanApr.error}</Error>*/}
             <input
               // onChange={(e) => setLoanApr(e.target.value)}
-                className={"sos"}
-                name="loanApr"
+              className={"sos"}
+              name="loanApr"
               value={this.state.loanApr}
               onChange={this.updateField.bind(this)}
               type="text"/>
           </InputSection>
-          <SubmitBtn id="submit" onClick={(e) => this.submitCalculation(e)}>Рассчитать</SubmitBtn>
+          <SubmitBtn id="save" onClick={(e) => this.saveState(e)}>Сохранить</SubmitBtn>
+          <SubmitBtn id="delete" onClick={(e) => this.deleteState(e)}>Очистить</SubmitBtn>
         </form>
-        <h3>Ежемесячный платеж: {this.state.monthlyPayments} руб.</h3>
+          <ResultContainer>
+            <h3>Ежемесячный платеж: {this.state.monthlyPayments} руб.</h3>
+            <h3>Необходимый доход: {this.state.requiredIncome} руб.</h3>
+            <h3>Переплата: {this.state.overpayment} руб.</h3>
+            <h3>Тело кредита: {this.state.loanBody} руб.</h3>
+          </ResultContainer>
+
       </Container>
     )
   }
 }
 
-// const [purchasePrice, setPurchasePrice] = useState("");
-// const [downPayment, setDownPayment] = useState("");
-// const [loanTerm, setLoanTerm] = useState("");
-// const [loanApr, setLoanApr] = useState("");
-// const [monthlyPayments, setMonthlyPayments] = useState(0.0);
-// //
-// const submitCalculation = async (e) => {
-//     e.preventDefault();
-//
-//     // validate fields
-//     const validatedPrice = await validateField(purchasePrice, setPurchasePrice);
-//     const validatedPayment = await validateField(downPayment, setDownPayment);
-//     const validatedLoanTerm = await validateField(loanTerm, setLoanTerm);
-//     const validatedApr = await validateField(loanApr, setLoanApr);
-//     // calculate
-//     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
-//         console.log('validated')
-//         calculateValues();
-//     }
-// }
-//
-// const calculateValues = () => {
-//     let principal = purchasePrice - downPayment;
-//     let monthlyInterest = loanApr / 100 / 12;
-//     let numberOfPayments = loanTerm * 12;
-//     let monthlyPrice = (principal * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
-//         [(1 + monthlyInterest) ** numberOfPayments - 1];
-//     setMonthlyPayments(displayLocale(monthlyPrice));
-// }
-//
-// const displayLocale = (num) => {
-//     let parts = Math.ceil(num).toString().split(".");
-//     return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (parts[1] ? '.' + parts[1] : '');
-// }
-//
-// const validateField = (field, setValue) => {
-//     // console.log("gigig")
-//     let int = parseFloat(field);
-//     if (field === "" || field === 0) {
-//         setValue({...field.values, error: "Обязательное поле"});
-//         return false
-//     } else if (isNaN(int)) {
-//         setValue({...field.values, error: "Введите число"});
-//         return false;
-//     } else {
-//         setValue(int);
-//         // console.log('gigi')
-//         return true;
-//     }
-// }
-
-// return StateForm
-// }
-
-// export default FormContainer;
