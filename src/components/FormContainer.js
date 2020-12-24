@@ -107,6 +107,26 @@ flex-wrap: wrap;
   border-radius: 1rem;
 `
 
+const AnchorSection = styled.div`
+  display:flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-top: 0.5rem;
+`
+
+const AnchorBtn = styled.button`
+  border: 2px solid black;
+  cursor: pointer;
+  border-radius: 5px;
+  border-color: #d8a051;
+  color: grey;
+  background-color: transparent;
+  &:hover {
+    background-color: #d8a051;
+    color: white;
+  }
+`
+
 export default class Fields extends React.Component {
   constructor(props) {
     super(props);
@@ -140,8 +160,6 @@ export default class Fields extends React.Component {
         overpayment: ''
       };
     }
-
-
   }
 
   changeFocus ()  {
@@ -185,17 +203,27 @@ export default class Fields extends React.Component {
   }
 
   validateFields() {
-    // validate fields
     const validatedPrice = +this.state.purchasePrice;
     const validatedPayment = +this.state.downPayment;
     const validatedLoanTerm =+this.state.loanTerm;
     const validatedApr = +this.state.loanApr;
-    // calculate
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
         this.calculateValues();
     } else {
      this.cleanRes()
     }
+  }
+
+  handleAnchor(e, percent) {
+    if (e) {
+      e.preventDefault();
+    }
+    let newDP = this.state.purchasePrice * percent / 100;
+    this.setState(prevState => ({
+      downPayment: newDP,
+    }), () => {
+      this.validateFields()
+    });
   }
 
   calculateValues() {
@@ -251,6 +279,13 @@ export default class Fields extends React.Component {
               value={this.state.downPayment}
               onChange={this.updateField.bind(this)}
               type="text"/>
+              <AnchorSection>
+                <AnchorBtn onClick={(e) => this.handleAnchor(e, 10)}>10%</AnchorBtn>
+                <AnchorBtn onClick={(e) => this.handleAnchor(e, 15)}>15%</AnchorBtn>
+                <AnchorBtn onClick={(e) => this.handleAnchor(e, 20)}>20%</AnchorBtn>
+                <AnchorBtn onClick={(e) => this.handleAnchor(e, 25)}>25%</AnchorBtn>
+                <AnchorBtn onClick={(e) => this.handleAnchor(e, 30)}>30%</AnchorBtn>
+              </AnchorSection>
           </InputSection>
           <InputSection>
             <label>Срок кредита (лет)</label>
