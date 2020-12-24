@@ -162,21 +162,6 @@ export default class Fields extends React.Component {
     }
   }
 
-  changeFocus ()  {
-    this.setState(prevState => ({
-      inFocus: !prevState.inFocus
-    }));
-  }
-
-  toCurrency(number) {
-    const formatter = new Intl.NumberFormat("sv-SE", {
-      style: "decimal",
-      currency: "SEK"
-    });
-
-    return formatter.format(number);
-  }
-
   saveState(e) {
     e.preventDefault();
     const stateCalc = JSON.stringify(this.state)
@@ -202,15 +187,19 @@ export default class Fields extends React.Component {
     this.cleanRes()
   }
 
+  trimNum(str) {
+    return str.split('').filter((el) => el !== ' ').join('');
+  }
+
   validateFields() {
-    const validatedPrice = +this.state.purchasePrice;
-    const validatedPayment = +this.state.downPayment;
-    const validatedLoanTerm =+this.state.loanTerm;
-    const validatedApr = +this.state.loanApr;
+    const validatedPrice = +this.trimNum(this.state.purchasePrice);
+    const validatedPayment = +this.trimNum(this.state.downPayment);
+    const validatedLoanTerm = +this.trimNum(this.state.loanTerm);
+    const validatedApr = +this.trimNum(this.state.loanApr);
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
-        this.calculateValues();
+        this.calculateValues(validatedPrice, validatedPayment, validatedLoanTerm, validatedApr);
     } else {
-     this.cleanRes()
+     this.cleanRes();
     }
   }
 
@@ -218,22 +207,22 @@ export default class Fields extends React.Component {
     if (e) {
       e.preventDefault();
     }
-    let newDP = this.state.purchasePrice * percent / 100;
+    let newDP = this.trimNum(this.state.purchasePrice) * percent / 100;
     this.setState(prevState => ({
-      downPayment: newDP,
+      downPayment: newDP.toString(),
     }), () => {
       this.validateFields()
     });
   }
 
-  calculateValues() {
-    let loanBody = this.state.purchasePrice - this.state.downPayment;
-    let monthlyInterest = this.state.loanApr / 100 / 12;
-    let numberOfPayments = this.state.loanTerm * 12;
+  calculateValues(purchasePrice, downPayment, loanTerm, loanApr) {
+    let loanBody = purchasePrice - downPayment;
+    let monthlyInterest = loanApr / 100 / 12;
+    let numberOfPayments = loanTerm * 12;
     let monthlyPrice = (loanBody * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
         [(1 + monthlyInterest) ** numberOfPayments - 1];
     let requiredIncome = monthlyPrice / 3 * 5;
-    let overpayment = monthlyPrice * (this.state.loanTerm * 12) - this.state.purchasePrice + +this.state.downPayment;
+    let overpayment = monthlyPrice * (loanTerm * 12) - purchasePrice + downPayment;
     this.setState({monthlyPayments: this.displayLocale(monthlyPrice)});
     this.setState({loanBody: this.displayLocale(loanBody)});
     this.setState({requiredIncome: this.displayLocale(requiredIncome)});
@@ -248,14 +237,14 @@ export default class Fields extends React.Component {
 
   updateField(event) {
     const target = event.target;
-    const value =  target.value;
+    let value =  target.value;
     const name = target.name;
-
+    value = value.split('').filter((el) => el !== ' ').join('');
     this.setState(prevState => ({
-      [name]: value,
+      [name]: this.displayLocale(value),
     }), () => {
-      this.validateFields()
-    })
+      this.validateFields();
+    });
   }
 
   render() {
@@ -265,7 +254,6 @@ export default class Fields extends React.Component {
           <InputSection>
             <label>Стоимость недвижимости</label>
             <input
-              className={"sos"}
               name="purchasePrice"
               value={this.state.purchasePrice}
               onChange={this.updateField.bind(this)}
@@ -274,7 +262,6 @@ export default class Fields extends React.Component {
           <InputSection>
             <label>Первоначальный взнос</label>
             <input
-              className={"sos"}
               name="downPayment"
               value={this.state.downPayment}
               onChange={this.updateField.bind(this)}
@@ -290,7 +277,6 @@ export default class Fields extends React.Component {
           <InputSection>
             <label>Срок кредита (лет)</label>
             <input
-              className={"sos"}
               name="loanTerm"
               value={this.state.loanTerm}
               onChange={this.updateField.bind(this)}
@@ -299,7 +285,6 @@ export default class Fields extends React.Component {
           <InputSection>
             <label>Процентная ставка</label>
             <input
-              className={"sos"}
               name="loanApr"
               value={this.state.loanApr}
               onChange={this.updateField.bind(this)}
