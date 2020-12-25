@@ -10,8 +10,6 @@ const Container = styled.div`
   padding: 3rem 0;
   max-width: 900px;
   margin: auto;
-
-
   h1 {
     font-size: 35px;
     font-weight: 500;
@@ -19,14 +17,12 @@ const Container = styled.div`
     margin-bottom: 10px;
     text-transform: uppercase;
   }
-
   h3 {
     font-weight: 400;
     font-size: 20px;
     line-height: 20px;
     padding: 1rem;
   }
-
   form {
     display: flex;
     justify-content: center;
@@ -42,13 +38,11 @@ const InputSection = styled.div`
   display: flex;
   flex-direction: column;
   padding: 1rem;
-
   label {
     text-transform: uppercase;
     font-weight: 400;
     color: grey;
   }
-
   input {
     background: rgba(255, 255, 255, 0.3);
     height: 35px;
@@ -61,7 +55,6 @@ const InputSection = styled.div`
     box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
     0 6px 6px -1px rgba(8, 11, 14, 0.1);
     transition: all 0.3s ease-in-out;
-
     &:hover, &:focus {
       box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
       0 10px 10px -1px rgba(8, 11, 14, 0.1);
@@ -85,7 +78,6 @@ const SubmitBtn = styled.button`
   box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
   0 6px 6px -1px rgba(8, 11, 14, 0.1);
   transition: all 0.3s ease-in-out;
-
   &:hover, &:focus {
     box-shadow: 0 0 1px 0 rgba(8, 11, 14, 0.06),
     0 10px 10px -1px rgba(8, 11, 14, 0.1);;
@@ -93,8 +85,8 @@ const SubmitBtn = styled.button`
 `
 
 const ResultContainer = styled.div`
-display: flex;
-flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: space-around;
   align-items: center;
   flex-direction: row;
@@ -115,10 +107,9 @@ const AnchorSection = styled.div`
 `
 
 const AnchorBtn = styled.button`
-  border: 2px solid black;
+  border: 2px solid #d8a051;
   cursor: pointer;
   border-radius: 5px;
-  border-color: #d8a051;
   color: grey;
   background-color: transparent;
   &:hover {
@@ -197,9 +188,9 @@ export default class Fields extends React.Component {
     const validatedLoanTerm = +this.trimNum(this.state.loanTerm);
     const validatedApr = +this.trimNum(this.state.loanApr);
     if (validatedPrice && validatedPayment && validatedLoanTerm && validatedApr) {
-        this.calculateValues(validatedPrice, validatedPayment, validatedLoanTerm, validatedApr);
+      this.calculateValues(validatedPrice, validatedPayment, validatedLoanTerm, validatedApr);
     } else {
-     this.cleanRes();
+      this.cleanRes();
     }
   }
 
@@ -207,9 +198,9 @@ export default class Fields extends React.Component {
     if (e) {
       e.preventDefault();
     }
-    let newDP = this.trimNum(this.state.purchasePrice) * percent / 100;
-    this.setState(prevState => ({
-      downPayment: newDP.toString(),
+    let newDP = Math.ceil(this.trimNum(this.state.purchasePrice) * percent / 100);
+    this.setState(() => ({
+      downPayment: this.displayLocale(newDP).toString(),
     }), () => {
       this.validateFields()
     });
@@ -220,7 +211,7 @@ export default class Fields extends React.Component {
     let monthlyInterest = loanApr / 100 / 12;
     let numberOfPayments = loanTerm * 12;
     let monthlyPrice = (loanBody * [monthlyInterest * (1 + monthlyInterest) ** numberOfPayments]) /
-        [(1 + monthlyInterest) ** numberOfPayments - 1];
+      [(1 + monthlyInterest) ** numberOfPayments - 1];
     let requiredIncome = monthlyPrice / 3 * 5;
     let overpayment = monthlyPrice * (loanTerm * 12) - purchasePrice + downPayment;
     this.setState({monthlyPayments: this.displayLocale(monthlyPrice)});
@@ -240,7 +231,7 @@ export default class Fields extends React.Component {
     let value =  target.value;
     const name = target.name;
     value = value.split('').filter((el) => el !== ' ').join('');
-    this.setState(prevState => ({
+    this.setState(() => ({
       [name]: this.displayLocale(value),
     }), () => {
       this.validateFields();
@@ -266,13 +257,13 @@ export default class Fields extends React.Component {
               value={this.state.downPayment}
               onChange={this.updateField.bind(this)}
               type="text"/>
-              <AnchorSection>
-                <AnchorBtn onClick={(e) => this.handleAnchor(e, 10)}>10%</AnchorBtn>
-                <AnchorBtn onClick={(e) => this.handleAnchor(e, 15)}>15%</AnchorBtn>
-                <AnchorBtn onClick={(e) => this.handleAnchor(e, 20)}>20%</AnchorBtn>
-                <AnchorBtn onClick={(e) => this.handleAnchor(e, 25)}>25%</AnchorBtn>
-                <AnchorBtn onClick={(e) => this.handleAnchor(e, 30)}>30%</AnchorBtn>
-              </AnchorSection>
+            <AnchorSection>
+              <AnchorBtn onClick={(e) => this.handleAnchor(e, 10)}>10%</AnchorBtn>
+              <AnchorBtn onClick={(e) => this.handleAnchor(e, 15)}>15%</AnchorBtn>
+              <AnchorBtn onClick={(e) => this.handleAnchor(e, 20)}>20%</AnchorBtn>
+              <AnchorBtn onClick={(e) => this.handleAnchor(e, 25)}>25%</AnchorBtn>
+              <AnchorBtn onClick={(e) => this.handleAnchor(e, 30)}>30%</AnchorBtn>
+            </AnchorSection>
           </InputSection>
           <InputSection>
             <label>Срок кредита (лет)</label>
@@ -293,14 +284,13 @@ export default class Fields extends React.Component {
           <SubmitBtn id="save" onClick={(e) => this.saveState(e)}>Сохранить</SubmitBtn>
           <SubmitBtn id="delete" onClick={(e) => this.deleteState(e)}>Очистить</SubmitBtn>
         </form>
-          <ResultContainer>
-            <h3>Ежемесячный платеж: {this.state.monthlyPayments} руб.</h3>
-            <h3>Необходимый доход: {this.state.requiredIncome} руб.</h3>
-            <h3>Переплата: {this.state.overpayment} руб.</h3>
-            <h3>Тело кредита: {this.state.loanBody} руб.</h3>
-          </ResultContainer>
+        <ResultContainer>
+          <h3>Ежемесячный платеж: {this.state.monthlyPayments} руб.</h3>
+          <h3>Необходимый доход: {this.state.requiredIncome} руб.</h3>
+          <h3>Переплата: {this.state.overpayment} руб.</h3>
+          <h3>Тело кредита: {this.state.loanBody} руб.</h3>
+        </ResultContainer>
       </Container>
     )
   }
 }
-
